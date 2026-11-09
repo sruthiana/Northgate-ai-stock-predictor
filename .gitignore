@@ -1,0 +1,46 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+.env
+data/raw/*
+data/processed/*
+models/*
+reports/figures/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/.gitkeep
+!reports/figures/.gitkeep
+
+# Generated reports and outputs
+reports/*.csv
+reports/*.json
+reports/*.html
+reports/*.xlsx
+reports/*.parquet
+reports/*.log
+
+# Generated model and data artifacts
+*.joblib
+*.pkl
+*.pickle
+*.h5
+*.keras
+*.pt
+*.pth
+
+# Environment and secrets
+.env.*
+!.env.example
+
+# Generated financial data and predictions
+data/cache/*
+data/predictions/*
+!data/cache/.gitkeep
+!data/predictions/.gitkeep
+
+# Generated reports
+reports/data_ingestion_log.txt
+reports/figures/
