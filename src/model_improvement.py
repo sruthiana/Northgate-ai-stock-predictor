@@ -1,481 +1,92 @@
+"""Diagnostics for Northgate AI Stock Predictor test predictions.
 
+Run: python -m src.model_improvement
+Directional accuracy is not meaningful for a zero-return forecast; this module
+reports it as NaN for all-zero prediction sets and provides a separate nonzero
+prediction hit rate.
 """
-Northgate AI Stock Predictor
-Model Improvement Diagnostics
-
-Purpose:
-1. Analyze actual versus predicted returns.
-2. Examine prediction bias and variability.
-3. Evaluate residual patterns.
-4. Compare model performance by ticker.
-5. Save diagnostic reports.
-
-This module does not retrain or overwrite existing models.
-"""
-
+from __future__ import annotations
 import logging
-
 import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from src.config import load_config, project_path
 
-from src.config import project_path
-
-
-# --------------------------------------------------
-# 1. CONFIGURE LOGGING
-# --------------------------------------------------
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-)
-
-logger = logging.getLogger(__name__)
+TARGET = "Target_Next_Day_Log_Return"
+PREDICTION = "Predicted_Log_Return"
 
 
-# --------------------------------------------------
-# 2. DEFINE FILE PATHS
-# --------------------------------------------------
-
-PREDICTIONS_PATH = project_path(
-    "reports/baseline_test_predictions.csv"
-)
-
-OVERALL_OUTPUT_PATH = project_path(
-    "reports/model_improvement_overall.csv"
-)
-
-TICKER_OUTPUT_PATH = project_path(
-    "reports/model_improvement_by_ticker.csv"
-)
-
-RESIDUAL_OUTPUT_PATH = project_path(
-    "reports/model_improvement_residuals.csv"
-)
-
-
-# --------------------------------------------------
-# 3. LOAD TEST PREDICTIONS
-# --------------------------------------------------
-
-def load_predictions():
-
-    logger.info("Loading baseline test predictions.")
-
-    if not PREDICTIONS_PATH.exists():
-        raise FileNotFoundError(
-            f"Prediction file not found: {PREDICTIONS_PATH}"
-        )
-
-    df = pd.read_csv(PREDICTIONS_PATH)
-
-    required_columns = [
-        "Date",
-        "Ticker",
-        "Target_Next_Day_Log_Return",
-        "Predicted_Log_Return",
-    ]
-
-    missing_columns = [
-        column
-        for column in required_columns
-        if column not in df.columns
-    ]
-
-    if missing_columns:
-        raise ValueError(
-            f"Missing required columns: {missing_columns}"
-        )
-
-    df = df[required_columns].copy()
-
-    df["Date"] = pd.to_datetime(
-        df["Date"],
-        errors="coerce",
-    )
-
-    df["Target_Next_Day_Log_Return"] = pd.to_numeric(
-        df["Target_Next_Day_Log_Return"],
-        errors="coerce",
-    )
-
-    df["Predicted_Log_Return"] = pd.to_numeric(
-        df["Predicted_Log_Return"],
-        errors="coerce",
-    )
-
-    df = df.dropna(
-        subset=[
-            "Date",
-            "Ticker",
-            "Target_Next_Day_Log_Return",
-            "Predicted_Log_Return",
-        ]
-    )
-
-    if df.empty:
-        raise ValueError(
-            "No valid prediction observations remain."
-        )
-
-    if not np.isfinite(
-        df[
-            [
-                "Target_Next_Day_Log_Return",
-                "Predicted_Log_Return",
-            ]
-        ].to_numpy()
-    ).all():
-        raise ValueError(
-            "Non-finite values detected in predictions."
-        )
-
-    logger.info(
-        "Loaded %s valid prediction observations.",
-        len(df),
-    )
-
-    return df
-
-
-# --------------------------------------------------
-# 4. CALCULATE MODEL METRICS
-# --------------------------------------------------
-
-def calculate_metrics(actual, predicted):
-
+def metrics(actual, predicted):
     actual = np.asarray(actual, dtype=float)
-
     predicted = np.asarray(predicted, dtype=float)
-
-    errors = actual - predicted
-
-    mae = np.mean(np.abs(errors))
-
-    rmse = np.sqrt(np.mean(errors ** 2))
-
-    actual_mean = np.mean(actual)
-
-    total_sum_squares = np.sum(
-        (actual - actual_mean) ** 2
-    )
-
-    residual_sum_squares = np.sum(errors ** 2)
-
-    if total_sum_squares > 0:
-
-        r2 = 1 - (
-            residual_sum_squares
-            / total_sum_squares
-        )
-
-    else:
-
-        r2 = np.nan
-
-    # Directional accuracy is calculated only when
-    # predictions are nonzero.
-    #
-    # A zero-return prediction has no direction and
-    # must not be treated as a correct prediction.
-
-    directional_mask = predicted != 0
-
-    if directional_mask.any():
-
-        directional_accuracy = np.mean(
-            np.sign(actual[directional_mask])
-            == np.sign(predicted[directional_mask])
-        )
-
-    else:
-
-        directional_accuracy = np.nan
-
+    sign_pred = np.sign(predicted)
+    nonzero = sign_pred != 0
     return {
-        "Observations": len(actual),
-        "Actual_Mean": np.mean(actual),
-        "Predicted_Mean": np.mean(predicted),
-        "Actual_Std": np.std(actual, ddof=1),
-        "Predicted_Std": np.std(
-            predicted,
-            ddof=1,
-        ),
-        "Mean_Prediction_Error": np.mean(
-            predicted - actual
-        ),
-        "MAE": mae,
-        "RMSE": rmse,
-        "R2": r2,
-        "Directional_Accuracy": directional_accuracy,
+        "Observations": int(len(actual)),
+        "Actual_Mean": float(np.mean(actual)),
+        "Predicted_Mean": float(np.mean(predicted)),
+        "Actual_Std": float(np.std(actual, ddof=1)) if len(actual) > 1 else 0.0,
+        "Predicted_Std": float(np.std(predicted, ddof=1)) if len(predicted) > 1 else 0.0,
+        "Mean_Prediction_Error": float(np.mean(predicted - actual)),
+        "MAE": float(mean_absolute_error(actual, predicted)),
+        "RMSE": float(np.sqrt(mean_squared_error(actual, predicted))),
+        "R2": float(r2_score(actual, predicted)) if len(actual) > 1 else np.nan,
+        "Directional_Accuracy": float(np.mean(np.sign(actual) == sign_pred)) if nonzero.any() else np.nan,
+        "Directional_Accuracy_Nonzero_Predictions": float(np.mean(np.sign(actual[nonzero]) == sign_pred[nonzero])) if nonzero.any() else np.nan,
+        "Prediction_Zero_Rate": float(np.mean(predicted == 0)),
     }
 
-
-# --------------------------------------------------
-# 5. OVERALL MODEL DIAGNOSTICS
-# --------------------------------------------------
-
-def overall_diagnostics(df):
-
-    logger.info(
-        "Calculating overall model diagnostics."
-    )
-
-    actual = df[
-        "Target_Next_Day_Log_Return"
-    ].to_numpy()
-
-    predicted = df[
-        "Predicted_Log_Return"
-    ].to_numpy()
-
-    zero_predictions = np.zeros_like(actual)
-
-    linear_metrics = calculate_metrics(
-        actual,
-        predicted,
-    )
-
-    zero_metrics = calculate_metrics(
-        actual,
-        zero_predictions,
-    )
-
-    results = {
-        "Observations": linear_metrics["Observations"],
-        "Actual_Mean": linear_metrics["Actual_Mean"],
-        "Predicted_Mean": linear_metrics["Predicted_Mean"],
-        "Actual_Std": linear_metrics["Actual_Std"],
-        "Predicted_Std": linear_metrics["Predicted_Std"],
-        "Mean_Prediction_Error": linear_metrics[
-            "Mean_Prediction_Error"
-        ],
-        "Linear_MAE": linear_metrics["MAE"],
-        "Linear_RMSE": linear_metrics["RMSE"],
-        "Linear_R2": linear_metrics["R2"],
-        "Linear_Directional_Accuracy": (
-            linear_metrics["Directional_Accuracy"]
-        ),
-        "Zero_Baseline_MAE": zero_metrics["MAE"],
-        "Zero_Baseline_RMSE": zero_metrics["RMSE"],
-        "Zero_Baseline_R2": zero_metrics["R2"],
-        "Zero_Baseline_Directional_Accuracy": np.nan,
-    }
-
-    result_df = pd.DataFrame([results])
-
-    result_df.to_csv(
-        OVERALL_OUTPUT_PATH,
-        index=False,
-    )
-
-    logger.info(
-        "Saved overall diagnostics: %s",
-        OVERALL_OUTPUT_PATH,
-    )
-
-    return result_df
-
-
-# --------------------------------------------------
-# 6. TICKER-SPECIFIC DIAGNOSTICS
-# --------------------------------------------------
-
-def ticker_diagnostics(df):
-
-    logger.info(
-        "Calculating ticker-specific diagnostics."
-    )
-
-    results = []
-
-    for ticker, group in df.groupby("Ticker"):
-
-        actual = group[
-            "Target_Next_Day_Log_Return"
-        ].to_numpy()
-
-        predicted = group[
-            "Predicted_Log_Return"
-        ].to_numpy()
-
-        zero_predictions = np.zeros_like(actual)
-
-        linear_metrics = calculate_metrics(
-            actual,
-            predicted,
-        )
-
-        zero_metrics = calculate_metrics(
-            actual,
-            zero_predictions,
-        )
-
-        results.append({
-            "Ticker": ticker,
-            "Observations": len(group),
-            "Actual_Mean": linear_metrics["Actual_Mean"],
-            "Predicted_Mean": linear_metrics[
-                "Predicted_Mean"
-            ],
-            "Actual_Std": linear_metrics["Actual_Std"],
-            "Predicted_Std": linear_metrics[
-                "Predicted_Std"
-            ],
-            "Linear_MAE": linear_metrics["MAE"],
-            "Zero_Baseline_MAE": zero_metrics["MAE"],
-            "Linear_RMSE": linear_metrics["RMSE"],
-            "Zero_Baseline_RMSE": zero_metrics["RMSE"],
-            "Linear_R2": linear_metrics["R2"],
-            "Directional_Accuracy": (
-                linear_metrics["Directional_Accuracy"]
-            ),
-        })
-
-    result_df = pd.DataFrame(results)
-
-    result_df = result_df.sort_values(
-        "Ticker"
-    ).reset_index(drop=True)
-
-    result_df.to_csv(
-        TICKER_OUTPUT_PATH,
-        index=False,
-    )
-
-    logger.info(
-        "Saved ticker diagnostics: %s",
-        TICKER_OUTPUT_PATH,
-    )
-
-    return result_df
-
-
-# --------------------------------------------------
-# 7. RESIDUAL ANALYSIS
-# --------------------------------------------------
-
-def residual_diagnostics(df):
-
-    logger.info(
-        "Calculating residual diagnostics."
-    )
-
-    result = df.copy()
-
-    actual = result[
-        "Target_Next_Day_Log_Return"
-    ]
-
-    predicted = result[
-        "Predicted_Log_Return"
-    ]
-
-    # Residual = actual - predicted
-
-    result["Residual"] = (
-        actual - predicted
-    )
-
-    result["Absolute_Residual"] = (
-        result["Residual"].abs()
-    )
-
-    result["Squared_Residual"] = (
-        result["Residual"] ** 2
-    )
-
-    result["Actual_Direction"] = np.sign(
-        actual
-    )
-
-    result["Predicted_Direction"] = np.sign(
-        predicted
-    )
-
-    result["Direction_Match"] = (
-        result["Actual_Direction"]
-        == result["Predicted_Direction"]
-    )
-
-    result.to_csv(
-        RESIDUAL_OUTPUT_PATH,
-        index=False,
-    )
-
-    logger.info(
-        "Saved residual diagnostics: %s",
-        RESIDUAL_OUTPUT_PATH,
-    )
-
-    return result
-
-
-# --------------------------------------------------
-# 8. MAIN EXECUTION
-# --------------------------------------------------
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s", force=True)
+    reports = project_path(load_config()["paths"]["reports"])
+    path = reports / "baseline_test_predictions.csv"
+    if not path.exists():
+        raise FileNotFoundError(f"Missing {path}. Run python -m src.modeling first.")
+    data = pd.read_csv(path)
+    required = {"Date", "Ticker", TARGET, PREDICTION}
+    if required - set(data.columns):
+        raise ValueError(f"Prediction file missing columns: {sorted(required - set(data.columns))}")
+    data[TARGET] = pd.to_numeric(data[TARGET], errors="coerce")
+    data[PREDICTION] = pd.to_numeric(data[PREDICTION], errors="coerce")
+    data = data.dropna(subset=[TARGET, PREDICTION]).copy()
 
-    logger.info(
-        "Starting model improvement diagnostics."
-    )
+    overall_rows = []
+    for name, group in [("Saved Model", data), ("Zero Return Baseline", data)]:
+        pred = group[PREDICTION].to_numpy() if name == "Saved Model" else np.zeros(len(group))
+        overall_rows.append({"Model": name, **metrics(group[TARGET], pred)})
+    overall = pd.DataFrame(overall_rows)
+    base = overall.loc[overall["Model"] == "Zero Return Baseline"].iloc[0]
+    overall["RMSE_Improvement_vs_Zero"] = base["RMSE"] - overall["RMSE"]
+    overall["MAE_Improvement_vs_Zero"] = base["MAE"] - overall["MAE"]
+    overall.to_csv(reports / "model_improvement_overall.csv", index=False)
 
-    df = load_predictions()
+    ticker_rows = []
+    for ticker, group in data.groupby("Ticker", sort=True):
+        actual = group[TARGET].to_numpy()
+        pred = group[PREDICTION].to_numpy()
+        row = {"Ticker": ticker, **metrics(actual, pred)}
+        zero = metrics(actual, np.zeros(len(actual)))
+        row["Zero_Baseline_MAE"] = zero["MAE"]
+        row["Zero_Baseline_RMSE"] = zero["RMSE"]
+        row["RMSE_Improvement_vs_Zero"] = zero["RMSE"] - row["RMSE"]
+        ticker_rows.append(row)
+    pd.DataFrame(ticker_rows).to_csv(reports / "model_improvement_by_ticker.csv", index=False)
 
-    overall = overall_diagnostics(df)
+    residuals = data[["Date", "Ticker", TARGET, PREDICTION]].copy()
+    residuals["Residual"] = residuals[TARGET] - residuals[PREDICTION]
+    residuals["Absolute_Residual"] = residuals["Residual"].abs()
+    residuals["Squared_Residual"] = residuals["Residual"] ** 2
+    residuals.to_csv(reports / "model_improvement_residuals.csv", index=False)
 
-    by_ticker = ticker_diagnostics(df)
-
-    residuals = residual_diagnostics(df)
-
-    print("\n" + "=" * 70)
-
-    print("OVERALL MODEL IMPROVEMENT DIAGNOSTICS")
-
-    print("=" * 70)
-
-    print(
-        overall.to_string(
-            index=False,
-            float_format=lambda value: f"{value:.6f}",
-        )
-    )
-
-    print("\n" + "=" * 70)
-
-    print("DIAGNOSTICS BY TICKER")
-
-    print("=" * 70)
-
-    print(
-        by_ticker.to_string(
-            index=False,
-            float_format=lambda value: f"{value:.6f}",
-        )
-    )
-
-    print("\n" + "=" * 70)
-
-    print("RESIDUAL SUMMARY")
-
-    print("=" * 70)
-
-    print(
-        residuals[
-            [
-                "Residual",
-                "Absolute_Residual",
-                "Squared_Residual",
-            ]
-        ].describe().to_string()
-    )
-
-    logger.info(
-        "Model improvement diagnostics completed."
-    )
+    print("\nOVERALL TEST COMPARISON")
+    print(overall.to_string(index=False, float_format=lambda x: f"{x:.6f}"))
+    print("\nTEST RESULTS BY TICKER")
+    print(pd.DataFrame(ticker_rows).to_string(index=False, float_format=lambda x: f"{x:.6f}"))
+    print("\nRESIDUAL SUMMARY")
+    print(residuals[["Residual", "Absolute_Residual", "Squared_Residual"]].describe().to_string())
+    logging.info("Saved corrected model diagnostics.")
 
 
 if __name__ == "__main__":
-
     main()

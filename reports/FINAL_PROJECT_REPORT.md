@@ -1,7 +1,8 @@
 ﻿# Northgate AI Stock Predictor
+
 ## Final Project Report
 
-### 1. Abstract
+### 1\. Abstract
 
 Northgate AI Stock Predictor is an educational financial analytics project developed to explore the integration of machine learning, deep learning, news sentiment, portfolio optimization, and historical backtesting.
 
@@ -9,7 +10,7 @@ The workflow includes historical market data processing, technical and macroecon
 
 The project also integrates optimized portfolio backtests and prediction-based strategies into a unified performance dataset and visualization.
 
-### 2. Problem Statement
+### 2\. Problem Statement
 
 Financial market data contains complex patterns influenced by historical price movements, volatility, macroeconomic conditions, and market sentiment.
 
@@ -17,7 +18,7 @@ The project investigates whether a structured machine learning workflow can prod
 
 The objective is analytical and educational rather than the development of a guaranteed profitable trading system.
 
-### 3. Objectives
+### 3\. Objectives
 
 1. Build a historical market data processing pipeline.
 2. Generate technical and macroeconomic features.
@@ -30,30 +31,31 @@ The objective is analytical and educational rather than the development of a gua
 9. Compare strategies using risk and return metrics.
 10. Integrate outputs into a unified portfolio comparison.
 
-### 4. Data and Features
+### 4\. Data and Features
 
 The configured stock universe contains ten equities:
 
 AAPL, MSFT, JPM, XOM, JNJ, PG, NVDA, KO, CAT, and HD.
 
-The project also uses the S&P 500, the VIX, and selected macroeconomic variables.
+The project also uses the S\&P 500, the VIX, and selected macroeconomic variables.
 
 Feature engineering includes:
-- Daily and logarithmic returns
-- Moving averages
-- Exponential moving averages
-- RSI
-- MACD
-- Bollinger Bands
-- Rolling volatility
-- Treasury yield spread
-- CPI-related features
-- Unemployment changes
-- News sentiment counts
+
+* Daily and logarithmic returns
+* Moving averages
+* Exponential moving averages
+* RSI
+* MACD
+* Bollinger Bands
+* Rolling volatility
+* Treasury yield spread
+* CPI-related features
+* Unemployment changes
+* News sentiment counts
 
 The processed modeling dataset contains 31 numeric features before final complete-feature filtering.
 
-### 5. Modeling Workflow
+### 5\. Modeling Workflow
 
 Traditional machine learning models were evaluated alongside recurrent deep learning models.
 
@@ -65,41 +67,89 @@ Chronological data splitting was used to reduce temporal leakage.
 
 The project evaluated predictive errors and directional performance rather than relying solely on strategy returns.
 
-### 6. Model Evaluation
+### 6\. Model Evaluation
 
 The traditional model evaluation identified limitations in predicting next-day returns.
 
 The deep learning evaluation produced the following test results for LSTM:
 
-- MAE: approximately 0.012125
-- RMSE: approximately 0.017509
-- R²: approximately -0.012262
-- Directional accuracy: approximately 50.87%
+* MAE: approximately 0.012125
+* RMSE: approximately 0.017509
+* R²: approximately -0.012262
+* Directional accuracy: approximately 50.87%
 
 The zero-return baseline test RMSE was approximately 0.017417.
 
 The LSTM RMSE was slightly worse than the zero-return baseline. Therefore, the model should not be described as demonstrating superior next-day return prediction.
 
-### 7. Portfolio Optimization
+### 6.1\. Direction Classification Experiment
+
+
+
+A supplementary direction classification experiment was conducted to evaluate whether market movements could be classified into Down, Neutral, and Up categories.
+
+
+
+The experiment evaluated four shortlisted tickers: XOM, KO, PG, and JPM. Each ticker was evaluated using 595 held-out test observations.
+
+
+
+The classification models were compared against a majority-class baseline using accuracy, balanced accuracy, Macro F1, and class-specific recall.
+
+
+
+| Ticker | Test Accuracy | Baseline Accuracy | Test Macro F1 | Baseline Macro F1 |
+
+|---|---:|---:|---:|---:|
+
+| XOM | 34.79% | 45.38% | 0.2880 | 0.2081 |
+
+| KO | 30.25% | 39.00% | 0.2996 | 0.1870 |
+
+| PG | 37.31% | 41.34% | 0.3458 | 0.1950 |
+
+| JPM | 35.46% | 46.05% | 0.2531 | 0.2102 |
+
+
+
+Macro F1 improved over the majority-class baseline for all four tickers. PG achieved the highest test Macro F1 of 0.3458 and the largest improvement of approximately 0.1507.
+
+
+
+However, test accuracy remained below the majority-class baseline for every ticker. Class-specific recall also indicated imbalanced predictions, particularly for JPM, which achieved high Down recall but very low Neutral and Up recall.
+
+
+
+The experiment demonstrates improvements in class-balanced evaluation relative to the majority-class baseline, but it does not establish reliable directional prediction.
+
+
+
+The classification results are therefore retained as an experimental component of the project and are not integrated as standalone Buy, Hold, or Sell recommendations.
+
+
+
+The evaluation uses held-out test observations and should not be used for further model selection or tuning.
+
+### 7\. Portfolio Optimization
 
 The project evaluated three portfolio allocation approaches:
 
-- Equal Weight
-- Minimum Volatility
-- Maximum Sharpe
+* Equal Weight
+* Minimum Volatility
+* Maximum Sharpe
 
 Portfolio optimization was followed by out-of-sample backtesting.
 
 The backtest used a training period for portfolio estimation and a subsequent test period for evaluation.
 
-### 8. Portfolio Backtest Results
+### 8\. Portfolio Backtest Results
 
-| Strategy | Cumulative Return | Annualized Return | Volatility | Sharpe | Maximum Drawdown |
-|---|---:|---:|---:|---:|---:|
-| Maximum Sharpe | 136.16% | 35.66% | 23.32% | 1.36 | -25.78% |
-| Equal Weight | 97.56% | 27.34% | 12.58% | 1.85 | -15.71% |
-| Minimum Volatility | 60.11% | 18.18% | 12.89% | 1.10 | -10.71% |
-| S&P 500 | 58.76% | 17.80% | 15.14% | 0.91 | -18.90% |
+|Strategy|Cumulative Return|Annualized Return|Volatility|Sharpe|Maximum Drawdown|
+|-|-:|-:|-:|-:|-:|
+|Maximum Sharpe|136.16%|35.66%|23.32%|1.36|-25.78%|
+|Equal Weight|97.56%|27.34%|12.58%|1.85|-15.71%|
+|Minimum Volatility|60.11%|18.18%|12.89%|1.10|-10.71%|
+|S\&P 500|58.76%|17.80%|15.14%|0.91|-18.90%|
 
 Maximum Sharpe produced the highest cumulative return in this backtest but also the largest maximum drawdown.
 
@@ -109,14 +159,14 @@ Minimum Volatility produced the smallest maximum drawdown.
 
 These are historical results, not forecasts.
 
-### 9. LSTM Strategy Results
+### 9\. LSTM Strategy Results
 
 The prediction-based strategy comparison produced:
 
-| Strategy | Cumulative Return | Annualized Return | Volatility | Sharpe | Maximum Drawdown |
-|---|---:|---:|---:|---:|---:|
-| LSTM Long Only | 12.85% | 5.84% | 8.33% | 0.22 | -9.02% |
-| LSTM Long Short | 3.07% | 1.43% | 8.85% | -0.29 | -8.78% |
+|Strategy|Cumulative Return|Annualized Return|Volatility|Sharpe|Maximum Drawdown|
+|-|-:|-:|-:|-:|-:|
+|LSTM Long Only|12.85%|5.84%|8.33%|0.22|-9.02%|
+|LSTM Long Short|3.07%|1.43%|8.85%|-0.29|-8.78%|
 
 The LSTM Long Only strategy produced a positive historical return.
 
@@ -124,7 +174,7 @@ The LSTM Long Short strategy produced a lower cumulative return and a negative S
 
 The strategy results should be considered exploratory because predictive performance did not demonstrate an improvement over the zero-return baseline on test RMSE.
 
-### 10. Unified Integration
+### 10\. Unified Integration
 
 The integration module successfully loaded the optimized portfolio backtest and prediction-based strategy comparison.
 
@@ -133,24 +183,26 @@ The resulting unified comparison contains six strategies:
 1. Maximum Sharpe Optimized Backtest
 2. Equal Weight Optimized Backtest
 3. Minimum Volatility Optimized Backtest
-4. S&P 500 Optimized Backtest Benchmark
+4. S\&P 500 Optimized Backtest Benchmark
 5. LSTM Long Only
 6. LSTM Long Short
 
 The integration generated:
-- Unified comparison CSV
-- Unified daily equity CSV
-- Unified performance chart
+
+* Unified comparison CSV
+* Unified daily equity CSV
+* Unified performance chart
 
 The unified daily dataset contains 3,915 rows and four columns:
-Date, Strategy, Equity, and Daily_Return.
+Date, Strategy, Equity, and Daily\_Return.
 
-### 11. Final Validation
+### 11\. Final Validation
 
 Structural validation confirmed:
-- No duplicate dates within individual strategy curves
-- No non-positive equity values
-- No missing values in the unified daily dataset
+
+* No duplicate dates within individual strategy curves
+* No non-positive equity values
+* No missing values in the unified daily dataset
 
 The initial reconciliation formula was corrected to use normalized initial capital.
 
@@ -162,7 +214,7 @@ After correction, compounded daily returns matched equity-based returns for all 
 
 The final validation therefore confirmed consistency between the daily return series and the normalized equity curves.
 
-### 12. Discussion
+### 12\. Discussion
 
 The project demonstrates a complete educational financial analytics pipeline.
 
@@ -178,7 +230,7 @@ News sentiment was available but sparse, limiting the strength of conclusions ab
 
 These findings highlight the importance of separating predictive accuracy from portfolio performance and of evaluating financial strategies using consistent periods, realistic costs, and robust out-of-sample methods.
 
-### 13. Limitations
+### 13\. Limitations
 
 1. Historical returns cannot guarantee future performance.
 2. Financial markets are non-stationary.
@@ -189,7 +241,7 @@ These findings highlight the importance of separating predictive accuracy from p
 7. Backtests may not capture all real-world execution effects.
 8. This project is not a live trading or investment recommendation system.
 
-### 14. Conclusion
+### 14\. Conclusion
 
 Northgate AI Stock Predictor successfully implemented an educational workflow integrating market data processing, feature engineering, traditional machine learning, recurrent neural networks, news sentiment, trading signals, portfolio optimization, backtesting, and unified performance reporting.
 
@@ -197,17 +249,18 @@ The portfolio integration and final equity reconciliation completed successfully
 
 The project also identified important limitations in next-day return prediction and demonstrated the need for careful out-of-sample evaluation, risk analysis, and transparent reporting.
 
-### 15. Future Work
+### 15\. Future Work
 
 Potential improvements include:
-- More robust sentiment coverage
-- Additional market and fundamental features
-- Walk-forward validation
-- Consistent evaluation windows across strategies
-- Improved transaction cost and execution modeling
-- Portfolio constraints and turnover controls
-- Benchmark-aware risk analysis
-- Further model calibration and baseline comparison
+
+* More robust sentiment coverage
+* Additional market and fundamental features
+* Walk-forward validation
+* Consistent evaluation windows across strategies
+* Improved transaction cost and execution modeling
+* Portfolio constraints and turnover controls
+* Benchmark-aware risk analysis
+* Further model calibration and baseline comparison
 
 ### Disclaimer
 
