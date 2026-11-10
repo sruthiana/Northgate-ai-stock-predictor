@@ -1,5 +1,48 @@
 ﻿# Northgate AI Stock Predictor
 
+AI-based stock market analysis and portfolio research project using machine learning, financial data analysis, news sentiment, and portfolio optimization.
+
+## GitHub Repository
+
+https://github.com/sruthiana/Northgate-ai-stock-predictor
+
+## Project Report
+
+See `reports/FINAL_PROJECT_REPORT.md` for the final project report.
+
+## Technologies Used
+
+- Python
+- Pandas and NumPy
+- Scikit-learn
+- Machine Learning
+- Financial Data Analysis
+- News Sentiment Analysis
+- Portfolio Optimization
+- Backtesting
+
+## Project Status
+
+Completed and published on GitHub.
+
+**Note:** This project is an educational and analytical prototype, not financial advice.
+
+This folder contains screenshots demonstrating the implementation and execution of the Northgate AI Stock Predictor project.
+
+## Screenshots
+
+1. Project Structure
+2. Data Preprocessing
+3. Exploratory Data Analysis
+4. Machine Learning Model Evaluation
+5. News Sentiment Analysis
+6. Portfolio Optimization
+7. Portfolio Backtesting
+8. GitHub Repository
+
+These screenshots provide visual evidence of the project's data processing, machine learning experiments, financial analysis, and portfolio research workflow.
+
+
 ## 1. Project Overview
 
 Northgate AI Stock Predictor is an educational machine learning and portfolio analytics project that combines historical stock market data, technical indicators, macroeconomic variables, news sentiment, predictive modeling, trading signals, portfolio optimization, and backtesting.
